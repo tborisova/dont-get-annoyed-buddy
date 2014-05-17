@@ -15,6 +15,7 @@ class Game:
     YELLOW = 2
     GREEN = 3
     START_FOR_COLOR = [0, 20, 40, 60]
+    COLOR = ['b', 'r', 'y', 'g']
 
     def __init__(self, players ,board=None):
         self._board = board or [0]*81
@@ -41,7 +42,7 @@ class Game:
                     player.remove_from_position(position)
                     break
         else:
-            self._board[position] = 1
+            self._board[position] = self._player.color_name()
         
         self._player.move_pawn_at(pawn, position)
         self.change_current_player()
@@ -54,7 +55,7 @@ class Game:
             self._player = self._players[0]
         else:
             self._player = self._players[self.current_player + 1]
-
+        
     def at(self, position):
         self._board[position]
 
@@ -83,3 +84,6 @@ class Player:
 
     def can_throw_again(self, dice):
         return dice == 6
+
+    def color_name(self):
+        return Game.COLOR[self._color]
