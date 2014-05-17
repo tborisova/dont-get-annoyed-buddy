@@ -1,3 +1,4 @@
+# http://en.wikipedia.org/wiki/File:Menschenaergern.svg
 import random
 
 class InvalidMoveError(Exception):
@@ -7,18 +8,25 @@ class Game:
     IN_PROGRESS = 4
     BLUE_WINS = 0
     RED_WINS = 1
-    YELLOW_WINS = 2
-    GREEN_WINS = 3
-    OUTCOMES = [BLUE_WINS, RED_WINS, YELLOW_WINS, GREEN_WINS, IN_PROGRESS]
+    GREEN_WINS = 2
+    YELLOW_WINS = 3
+    OUTCOMES = [BLUE_WINS, RED_WINS, GREEN_WINS, YELLOW_WINS, IN_PROGRESS]
     BLUE = 0
     RED = 1
-    YELLOW = 2
-    GREEN = 3
-    START_FOR_COLOR = [0, 20, 40, 60]
-    COLOR = ['b', 'r', 'y', 'g']
+    GREEN = 2
+    YELLOW = 3
+    START_FOR_COLOR = [0, 10, 20, 30]
+    END_FOR_COLOR = [39, 9, 19, 29]
+    START_FINAL_WALK = [40, 44, 48, 52]
+    PATH_TO_BLUE = [40,41,42,43]
+    PATH_TO_RED = [44,45,46,47]
+    PATH_TO_GREEN = [48,49,50,51]
+    PATH_TO_YELLOW = [52,53,54,55]
+    
+    COLOR = ['B1', 'R1', 'G1', 'Y1']
 
     def __init__(self, players ,board=None):
-        self._board = board or [0]*81
+        self._board = board or [0]*56
         self._players = players
         self._player = players[0]
 
@@ -51,13 +59,13 @@ class Game:
         pawn >= 1 and pawn <= 4 and position >= 0 and position <=81
 
     def change_current_player(self):
-        if self.current_player == self.GREEN:
+        if self.current_player == Game.YELLOW:
             self._player = self._players[0]
         else:
             self._player = self._players[self.current_player + 1]
         
     def at(self, position):
-        self._board[position]
+       return self._board[position]
 
 class Player:
     
@@ -72,7 +80,10 @@ class Player:
         return self._pawns[pawn_index - 1]
 
     def move_pawn_at(self, pawn, position):
-        self._pawns[pawn - 1] = position
+        if self.is_at_end(pawn):
+            self._pawns[pawn - 1] = START_FINAL_WALK[self._color]
+        else:
+            self._pawns[pawn - 1] = position
 
     def remove_from_position(self, position):
         for index, pawn in enumerate(self._pawns):
@@ -87,3 +98,6 @@ class Player:
 
     def color_name(self):
         return Game.COLOR[self._color]
+
+    def is_at_end(self, pawn):
+        return self._pawns[pawn - 1] == Game.END_FOR_COLOR[self._color]

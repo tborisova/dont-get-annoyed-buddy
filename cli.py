@@ -4,27 +4,21 @@ from game import Game
 from game import Player
 
 BOARD = """
-             0 * *
-             1 * *
-             2 * *
-    r r      3 * *    b b 
-    r r      4 * *    b b
-             5 * *
-             6 * *
-20 * * * * * *     * * * * * * 40
-* * * * * * *     * * * * * * *
-* * * * * * *     * * * * * * *
-             * * *
-             * * *
-   y y       * * *    g g
-   y y       * * *    g g
-             * * *
-             * * *
-             30 * *
+                  38 39 00
+                  37 40 01
+                  36 41 02
+                  35 42 03
+      30 31 32 33 34 43 04 05 06 07 08
+      29 44 45 46 47    51 50 49 48 09
+      28 27 26 25 24 55 14 13 12 11 10
+                  23 54 15
+                  22 53 16
+                  21 52 17
+                  20 19 18
 """
 class CLI:
     def __init__(self):
-        self._players = [Player(Game.BLUE), Player(Game.RED), Player(Game.YELLOW), Player(Game.GREEN)]
+        self._players = [Player(Game.BLUE), Player(Game.RED), Player(Game.GREEN), Player(Game.YELLOW)]
         self._game = Game(self._players)
 
     def play(self):
@@ -56,10 +50,15 @@ class CLI:
     def _draw_board(self):
         b = BOARD[:]
         for index, cell in enumerate(self._game._board):
-            if cell:
-                b = b.replace(str(index), cell, 1)
+            original_index = index
+            if index in range(0, 10):
+                index = '0' + str(index)
             else:
-                b = b.replace(str(index), '*', 1)
+                index = str(index)
+            if cell:
+                b = b.replace(index, self._game.at(original_index), 1)
+            else:
+                b = b.replace(index, '**',  1)
         print(b)
 
     def _get_move(self):
@@ -73,3 +72,4 @@ class CLI:
 
 
 CLI().play()
+# print(BOARD)
