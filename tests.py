@@ -135,14 +135,15 @@ class GameTest(unittest.TestCase):
         game = self.create_game()
 
         game._player = game._players[3]
-        game._player._pawns[0] = 39
+        game._player._pawns[0] = 34
 
         self.assertEqual(game._board[0], 0)
 
-        game.play(1, 3)
-        
-        self.assertEqual(game._board[3], 'R1')
+        game.play(1, 6)
+        self.assertEqual(game._board[1], 'R1')
 
+    def testThatWhenPlayerIsnHouseItCanOnlyMoveInsideNotInTheField(self):
+        pass
 if __name__ == '__main__':
     unittest.main()
 

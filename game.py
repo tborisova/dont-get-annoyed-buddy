@@ -55,8 +55,8 @@ class Game:
         self._board[old_position] = 0
 
         if (new_position in self.forbiden_cells()) and self._player.cant_go_there(new_position):
-            new_position = position + self.next_availabe(old_position, new_position)
-
+            new_position = self.next_availabe(old_position, new_position, position)
+            
         
         if self._board[new_position]:
             for player in self._players:
@@ -64,22 +64,22 @@ class Game:
                     self._players[self.previous_player].remove_from_position(new_position)
                     break
             
-        self._board[new_position] = self._player.color_name()
+        self._board[new_position] = self._player.color_name() # new_position - 1!!!
         self._player.move_pawn_at(pawn, new_position)
         self.change_current_player()
 
-    def next_availabe(self, old_position, new_position):
+    def next_availabe(self, old_position, new_position, moves):
         if new_position in Game.PATHS_TO_END['B1']:
-            return Game.END_FOR_COLOR[0] - old_position
+            return Game.START_FOR_COLOR[0] + (moves - ((Game.END_FOR_COLOR[0] - old_position) + new_position - Game.END_FOR_COLOR[0] - 1))
         if new_position in Game.PATHS_TO_END['G1']:
-            return Game.END_FOR_COLOR[1] - old_position 
+            return Game.START_FOR_COLOR[1] + (Game.END_FOR_COLOR[1] - old_position + new_position - Game.END_FOR_COLOR[1] - 1) 
         if new_position in Game.PATHS_TO_END['Y1']:
-            return Game.END_FOR_COLOR[2] - old_position 
+            return Game.START_FOR_COLOR[2] + (Game.END_FOR_COLOR[2] - old_position + new_position - Game.END_FOR_COLOR[2] - 1) 
         if new_position in Game.PATHS_TO_END['R1']:
-            return Game.END_FOR_COLOR[3] - old_position
+            return Game.START_FOR_COLOR[3] + (Game.END_FOR_COLOR[3] - old_position + new_position - Game.END_FOR_COLOR[3] - 1)
 
     def forbiden_cells(self):
-        return Game.END_FOR_COLOR + Game.PATHS_TO_END['B1'] + Game.PATHS_TO_END['Y1'] + Game.PATHS_TO_END['G1'] + Game.PATHS_TO_END['R1']    
+        return Game.PATHS_TO_END['B1'] + Game.PATHS_TO_END['Y1'] + Game.PATHS_TO_END['G1'] + Game.PATHS_TO_END['R1']    
 
     def valid_move(self, pawn, position):
         pawn >= 1 and pawn <= 4 and position >= 0 and position <= 56
