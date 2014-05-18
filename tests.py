@@ -24,7 +24,7 @@ class PlayerTest(unittest.TestCase):
 
 class GameTest(unittest.TestCase):
     def create_game(self, board=[0]*56):
-        players = [Player(Game.BLUE), Player(Game.RED), Player(Game.GREEN), Player(Game.YELLOW)]
+        players = [Player(Game.BLUE), Player(Game.GREEN), Player(Game.YELLOW), Player(Game.RED)]
         return Game(players, board[:])
     
     def testDeterminingInProgress(self):
@@ -41,14 +41,14 @@ class GameTest(unittest.TestCase):
         game = self.create_game()
         self.assertEqual(game.current_player, Game.BLUE)     
         
-        game.play(1,20)
-        self.assertEqual(game.current_player, Game.RED)
-        
-        game.play(1,40)
+        game.play(1,2)
         self.assertEqual(game.current_player, Game.GREEN)
-
-        game.play(1,43)
+        
+        game.play(1,4)
         self.assertEqual(game.current_player, Game.YELLOW)
+
+        game.play(1,3)
+        self.assertEqual(game.current_player, Game.RED)
         
         game.play(1,0)            
         self.assertEqual(game.current_player, Game.BLUE)
@@ -56,49 +56,48 @@ class GameTest(unittest.TestCase):
     def testPlayChangesBoard(self):
         game = self.create_game()
         
-        game.play(0, 47) 
-        self.assertEqual(game._board[47], 'B1')
+        game.play(0, 4) 
+        self.assertEqual(game._board[4], 'B1')
         self.assertTrue('B1' in game._board)
 
-        game.play(1, 48)
-        self.assertEqual(game._board[48], 'R1')
-        self.assertTrue('R1' in game._board)
+        game.play(1, 8)
+        self.assertEqual(game._board[18], 'G1')
+        self.assertTrue('G1' in game._board)
 
     def testPlayChangesPawnsPosition(self):
         game = self.create_game()
 
-        game.play(1, 47)
-        self.assertEqual(game._players[0].pawn_position(1), 47)
+        game.play(1, 4)
+        self.assertEqual(game._players[0].pawn_position(1), 4)
         
-        game.play(1, 48)
-        self.assertEqual(game._players[1].pawn_position(1), 48)
+        game.play(1, 8)
+        self.assertEqual(game._players[1].pawn_position(1), 18)
         
         game.play(2, 3)
-        self.assertEqual(game._players[2].pawn_position(2), 3)
+        self.assertEqual(game._players[2].pawn_position(2), 23)
     
-    def testPlayerMovesPawnOverOtherPlayersPawn(self):
+    def xtestPlayerMovesPawnOverOtherPlayersPawn(self):
         game = self.create_game()
 
-        game.play(1, 47)
-        game.play(1, 47)
+        game.play(1, 4)
+        game.play(1, 4)
         self.assertEqual(game._players[0].pawn_position(1),  0)
     
     def testPlayerMovesPawnOverHisOtherPawn(self):
         game = self.create_game()
 
-        game.play(1, 47)
+        game.play(1, 7)
         game.play(1, 4)
         game.play(1, 2)
         game.play(1, 1)
-        game.play(2, 47)
-        self.assertEqual(game._players[0].pawn_position(1), 47)
-        self.assertEqual(game._players[0].pawn_position(2), 47)
+        game.play(2, 7)
+        self.assertEqual(game._players[0].pawn_position(1), 7)
+        self.assertEqual(game._players[0].pawn_position(2), 7)
     
     def xtestInvalidMoveIfOutsideBoard(self):
         game = self.create_game()
 
-        with self.assertRaises(InvalidMoveError):
-            game.play(1, 82)
+        self.assertRaises(InvalidMoveError, game.play(1, 82))
 
     def testGameEndsWhenPlayerHasAllPawnsInTheFinale(self):
         game = self.create_game()
@@ -114,13 +113,36 @@ class GameTest(unittest.TestCase):
 
     def testOldPositionToPawnIsUnset(self):
         game = self.create_game()
-        game.play(1, 47)
+        game.play(1, 2)
         game.play(1, 4)
         game.play(1, 2)
         game.play(1, 1)
-        game.play(1, 48)
-        self.assertEqual(game._board[47], 0)
+        game.play(1, 9)
+        self.assertEqual(game._board[2], 0)
+    
+    def testPlayerStartPosition(self):
+        game = self.create_game()
+
+        game.play(1, 1)
+
+        self.assertEqual(game._board[1], 'B1')
+    
+        game.play(1, 2)
+
+        self.assertEqual(game._board[12], 'G1')
+
+    def testsPlayerCantGoInOtherHouse(self):
+        game = self.create_game()
+
+        game._player = game._players[3]
+        game._player._pawns[0] = 39
+
+        self.assertEqual(game._board[0], 0)
+
+        game.play(1, 3)
         
+        self.assertEqual(game._board[3], 'R1')
+
 if __name__ == '__main__':
     unittest.main()
 

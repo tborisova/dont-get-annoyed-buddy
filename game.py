@@ -7,23 +7,24 @@ class InvalidMoveError(Exception):
 class Game:
     IN_PROGRESS = 4
     BLUE_WINS = 0
-    RED_WINS = 1
-    GREEN_WINS = 2
-    YELLOW_WINS = 3
-    OUTCOMES = [BLUE_WINS, RED_WINS, GREEN_WINS, YELLOW_WINS, IN_PROGRESS]
+    GREEN_WINS = 1
+    YELLOW_WINS = 2
+    RED_WINS = 3
+    OUTCOMES = [BLUE_WINS, GREEN_WINS, YELLOW_WINS, RED_WINS, IN_PROGRESS]
     BLUE = 0
-    RED = 1
-    GREEN = 2
-    YELLOW = 3
+    GREEN = 1
+    YELLOW = 2
+    RED = 3
     START_FOR_COLOR = [0, 10, 20, 30]
     END_FOR_COLOR = [39, 9, 19, 29]
+    NEXT_AVAILABLE_POSITION = [0, 10, 20, 30]
     START_FINAL_WALK = [40, 44, 48, 52]
-    PATH_TO_BLUE = [40,41,42,43]
-    PATH_TO_RED = [44,45,46,47]
-    PATH_TO_GREEN = [48,49,50,51]
-    PATH_TO_YELLOW = [52,53,54,55]
-    
-    COLOR = ['B1', 'R1', 'G1', 'Y1']
+    PATHS_TO_END = {'B1': [40,41,42,43],
+                                 'G1': [44,45,46,47],
+                                 'Y1': [48,49,50,51],
+                                 'R1': [52,53,54,55]}
+
+    COLOR = ['B1', 'G1', 'Y1', 'R1']
 
     def __init__(self, players ,board=None):
         self._board = board or [0]*56
@@ -41,25 +42,50 @@ class Game:
     def current_player(self):
         return self._player.color()
 
+    @property
+    def previous_player(self):
+        if self.current_player == 0:
+            return 3
+        else:
+            return self.current_player - 1
+    
     def play(self, pawn, position):
         old_position = self._player.pawn_position(pawn)
+        new_position = old_position + position
         self._board[old_position] = 0
-        if self._board[position]:
+
+        if (new_position in self.forbiden_cells()) and self._player.cant_go_there(new_position):
+            new_position = position + self.next_availabe(old_position, new_position)
+
+        
+        if self._board[new_position]:
             for player in self._players:
                 if player.color() != self.current_player and position in player._pawns:
-                    player.remove_from_position(position)
+                    self._players[self.previous_player].remove_from_position(new_position)
                     break
-        else:
-            self._board[position] = self._player.color_name()
-        
-        self._player.move_pawn_at(pawn, position)
+            
+        self._board[new_position] = self._player.color_name()
+        self._player.move_pawn_at(pawn, new_position)
         self.change_current_player()
 
+    def next_availabe(self, old_position, new_position):
+        if new_position in Game.PATHS_TO_END['B1']:
+            return Game.END_FOR_COLOR[0] - old_position
+        if new_position in Game.PATHS_TO_END['G1']:
+            return Game.END_FOR_COLOR[1] - old_position 
+        if new_position in Game.PATHS_TO_END['Y1']:
+            return Game.END_FOR_COLOR[2] - old_position 
+        if new_position in Game.PATHS_TO_END['R1']:
+            return Game.END_FOR_COLOR[3] - old_position
+
+    def forbiden_cells(self):
+        return Game.END_FOR_COLOR + Game.PATHS_TO_END['B1'] + Game.PATHS_TO_END['Y1'] + Game.PATHS_TO_END['G1'] + Game.PATHS_TO_END['R1']    
+
     def valid_move(self, pawn, position):
-        pawn >= 1 and pawn <= 4 and position >= 0 and position <=81
+        pawn >= 1 and pawn <= 4 and position >= 0 and position <= 56
 
     def change_current_player(self):
-        if self.current_player == Game.YELLOW:
+        if self.current_player == Game.RED:
             self._player = self._players[0]
         else:
             self._player = self._players[self.current_player + 1]
@@ -101,3 +127,7 @@ class Player:
 
     def is_at_end(self, pawn):
         return self._pawns[pawn - 1] == Game.END_FOR_COLOR[self._color]
+
+    def cant_go_there(self, position):
+        return position not in Game.PATHS_TO_END[self.color_name()] and \
+        position != Game.END_FOR_COLOR[self._color]
