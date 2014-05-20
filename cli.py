@@ -2,33 +2,28 @@ import re
 import os
 from game import Game
 from game import Player
-# 42 - 39 = 3
-# 4 - 3 са стъпките до началото на края
-# след това + 1 стъпка за да стигнеш до началото
-# значи ти остават хвърлените стъпки - 2 
-# хвърлила съм 4
-# правя m стъпки до старт на цвета и след това к стъпки,които ми остават
+
 BOARD = """
                   38 39 00
                   37 40 01
             r     36 41 02      b
                   35 42 03
       30 31 32 33 34 43 04 05 06 07 08
-      29 44 45 46 47    51 50 49 48 09
-      28 27 26 25 24 55 14 13 12 11 10
-                  23 54 15
-                  22 53 16
-           y      21 52 17    g
+      29 52 53 54 55    47 46 45 44 09
+      28 27 26 25 24 51 14 13 12 11 10
+                  23 50 15
+                  22 49 16
+           y      21 48 17    g
                   20 19 18
 """
+
 class CLI:
-    def __init__(self):
-        self._players = [Player(Game.BLUE), Player(Game.GREEN), Player(Game.YELLOW), Player(Game.RED)]
-        self._game = Game(self._players)
+    def __init__(self, players):
+        self._game = Game(players)
 
     def play(self):
         while self._game.outcome() == Game.IN_PROGRESS:
-            self._clear()
+            # self._clear()
             self._draw_board()
 
             position = None
@@ -71,18 +66,16 @@ class CLI:
             else:
                 b = b.replace(index, '**',  1)
         print(b)
-        print(self._game._board)
 
     def _get_move(self):
         print("Player: {0} is about to throw dice".format(self._game._player.color_name()))
         dice = self._game._player.throw_dice()
         print("You throw: {0}".format(dice))
         print("Choose pawn to move:[1,2,3,4]:", end='')
-        pawn = int(input())
+        pawn = input()
         position = dice
         
-        return [pawn, position]
+        return [1, position]
 
 
-CLI().play()
-# print(BOARD)
+CLI([Player(Game.BLUE), Player(Game.GREEN), Player(Game.YELLOW), Player(Game.RED)]).play()

@@ -153,8 +153,8 @@ class GameTest(unittest.TestCase):
         game = self.create_game()
 
         game._player._pawns[0] = 41
-        game.play(1, 2)
-        self.assertEqual(game._board[43], 'B1')
+        game.play(1, 3)
+        self.assertEqual(game._board[44], 0)
 
         game = self.create_game()
 

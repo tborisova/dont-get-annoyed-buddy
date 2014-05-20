@@ -50,22 +50,26 @@ class Game:
             return self.current_player - 1
     
     def play(self, pawn, position):
-        old_position = self._player.pawn_position(pawn)
-        new_position = old_position + position
-        self._board[old_position] = 0
+        if self._player.pawn_is_on_field(pawn):
+            old_position = self._player.pawn_position(pawn)
+            new_position = old_position + position
 
-        if (new_position in self.forbiden_cells()) and self._player.position_is_in_other_house(new_position):
-            new_position = self.next_availabe(old_position, new_position, position)
+            if (new_position in self.forbiden_cells()) and self._player.position_is_in_other_house(new_position):
+                new_position = self.next_availabe(old_position, new_position, position)
 
-        if self._board[new_position]:
-            for player in self._players:
-                if player.color() != self.current_player and position in player._pawns:
-                    self._players[self.previous_player].remove_from_position(new_position)
-                    break
-
-        if self._player.can_move_to_position(pawn, new_position):
-            self._board[new_position] = self._player.color_name()
-            self._player.move_pawn_at(pawn, new_position)
+            if self._player.will_go_in_house(pawn, position):
+                self._board[old_position] = 0
+            else:
+                if self._player.can_move_to_position(pawn, new_position):
+                    if self._board[new_position]:
+                        for player in self._players:
+                            if player.color() != self.current_player and position in player._pawns:
+                                self._players[self.previous_player].remove_from_position(new_position)
+                                break
+                    self._board[old_position] = 0
+                    
+                    new_position = self._player.move_pawn_at(pawn, new_position, position) #това трябва да връща new_position на 70 ред
+                    self._board[new_position] = self._player.color_name()
 
         self.change_current_player()
 
@@ -73,11 +77,11 @@ class Game:
         if new_position in Game.PATHS_TO_END['B1']:
             return Game.START_FOR_COLOR[0] + (moves - ((Game.END_FOR_COLOR[0] - old_position) + new_position - Game.END_FOR_COLOR[0] - 1))
         if new_position in Game.PATHS_TO_END['G1']:
-            return Game.START_FOR_COLOR[1] + (Game.END_FOR_COLOR[1] - old_position + new_position - Game.END_FOR_COLOR[1] - 1) 
+            return Game.START_FOR_COLOR[1] + (moves - ((Game.END_FOR_COLOR[1] - old_position) + new_position - Game.END_FOR_COLOR[1] - 1))
         if new_position in Game.PATHS_TO_END['Y1']:
-            return Game.START_FOR_COLOR[2] + (Game.END_FOR_COLOR[2] - old_position + new_position - Game.END_FOR_COLOR[2] - 1) 
+            return Game.START_FOR_COLOR[2] + (moves - ((Game.END_FOR_COLOR[2] - old_position) + new_position - Game.END_FOR_COLOR[2] - 1))
         if new_position in Game.PATHS_TO_END['R1']:
-            return Game.START_FOR_COLOR[3] + (Game.END_FOR_COLOR[3] - old_position + new_position - Game.END_FOR_COLOR[3] - 1)
+            return Game.START_FOR_COLOR[3] + (moves - ((Game.END_FOR_COLOR[3] - old_position) + new_position - Game.END_FOR_COLOR[3] - 1))
 
     def forbiden_cells(self):
         return Game.PATHS_TO_END['B1'] + Game.PATHS_TO_END['Y1'] + Game.PATHS_TO_END['G1'] + Game.PATHS_TO_END['R1']    
@@ -106,11 +110,17 @@ class Player:
     def pawn_position(self, pawn_index):
         return self._pawns[pawn_index - 1]
 
-    def move_pawn_at(self, pawn, position):
+    def move_pawn_at(self, pawn, position, moves):
         if self.is_at_end(pawn):
-            self._pawns[pawn - 1] = START_FINAL_WALK[self._color]
+            self._pawns[pawn - 1] = Game.START_FINAL_WALK[self._color]
+        elif position >= Game.END_FOR_COLOR[self._color] and self._pawns[pawn - 1] <= Game.END_FOR_COLOR[self._color]:
+            moves_to_start_of_final_walk = Game.END_FOR_COLOR[self._color] - self._pawns[pawn - 1]
+            moves_to_make = moves - moves_to_start_of_final_walk
+            new_position = Game.PATHS_TO_END[self.color_name()][0] + moves_to_make
+            self._pawns[pawn - 1] = new_position
         else:
             self._pawns[pawn - 1] = position
+        return self._pawns[pawn - 1]
 
     def remove_from_position(self, position):
         for index, pawn in enumerate(self._pawns):
@@ -138,5 +148,14 @@ class Player:
 
     def can_move_to_position(self, pawn, position):
         if self._pawns[pawn - 1] in Game.PATHS_TO_END[self.color_name()]:
-            return position <= Game.PATHS_TO_END[self.color_name()][3]
+            return position in Game.PATHS_TO_END[self.color_name()]
         return True
+
+    def will_go_in_house(self, pawn, moves):
+        if self._pawns[pawn - 1] in Game.PATHS_TO_END[self.color_name()] and moves == 1:
+            self._pawns[pawn - 1] = -1
+            return True
+        return False
+
+    def pawn_is_on_field(self, pawn):
+        return self._pawns[pawn - 1] != -1
