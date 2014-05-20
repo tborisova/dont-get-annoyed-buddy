@@ -54,18 +54,19 @@ class Game:
         new_position = old_position + position
         self._board[old_position] = 0
 
-        if (new_position in self.forbiden_cells()) and self._player.cant_go_there(new_position):
+        if (new_position in self.forbiden_cells()) and self._player.position_is_in_other_house(new_position):
             new_position = self.next_availabe(old_position, new_position, position)
-            
-        
+
         if self._board[new_position]:
             for player in self._players:
                 if player.color() != self.current_player and position in player._pawns:
                     self._players[self.previous_player].remove_from_position(new_position)
                     break
-            
-        self._board[new_position] = self._player.color_name() # new_position - 1!!!
-        self._player.move_pawn_at(pawn, new_position)
+
+        if self._player.can_move_to_position(pawn, new_position):
+            self._board[new_position] = self._player.color_name()
+            self._player.move_pawn_at(pawn, new_position)
+
         self.change_current_player()
 
     def next_availabe(self, old_position, new_position, moves):
@@ -128,6 +129,14 @@ class Player:
     def is_at_end(self, pawn):
         return self._pawns[pawn - 1] == Game.END_FOR_COLOR[self._color]
 
-    def cant_go_there(self, position):
-        return position not in Game.PATHS_TO_END[self.color_name()] and \
-        position != Game.END_FOR_COLOR[self._color]
+    def  position_is_in_other_house(self, position):
+        b = {key for key in Game.PATHS_TO_END if key != self.color_name()}
+        for key in b:
+            if position in Game.PATHS_TO_END[key]:
+                return True
+        return False
+
+    def can_move_to_position(self, pawn, position):
+        if self._pawns[pawn - 1] in Game.PATHS_TO_END[self.color_name()]:
+            return position <= Game.PATHS_TO_END[self.color_name()][3]
+        return True

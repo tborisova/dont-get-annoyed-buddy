@@ -140,10 +140,45 @@ class GameTest(unittest.TestCase):
         self.assertEqual(game._board[0], 0)
 
         game.play(1, 6)
+
         self.assertEqual(game._board[1], 'R1')
 
     def testThatWhenPlayerIsnHouseItCanOnlyMoveInsideNotInTheField(self):
-        pass
+        game = self.create_game()
+
+        game._player._pawns[0] = 40
+        game.play(1, 6)
+        self.assertEqual(game._board[46], 0)
+
+        game = self.create_game()
+
+        game._player._pawns[0] = 41
+        game.play(1, 2)
+        self.assertEqual(game._board[43], 'B1')
+
+        game = self.create_game()
+
+        game._player._pawns[0] = 42
+        game.play(1, 2)
+        self.assertEqual(game._board[44], 0)
+        
+        game = self.create_game()
+        game._player._pawns[0] = 42
+        
+        game.play(1, 1)
+        self.assertEqual(game._board[43], 'B1')
+    
+    def GameIsOverWhenAllPawnsAreInHouse(self):
+        game = self.create_game()
+        game._player._pawns[0] = 42
+        game._player._pawns[1] = 43
+        game._player._pawns[2] = 43
+        game._player._pawns[3] = 43
+        
+        game.play(1, 1)
+        self.assertEqual(game._board[43], 'B1')
+        
+        self.assertEqual(game.outcome(), Game.BLUE_WINS)
 if __name__ == '__main__':
     unittest.main()
 

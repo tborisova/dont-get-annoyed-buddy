@@ -47,8 +47,13 @@ class CLI:
             print("Whoo! BLUE wins!")
         elif outcome == Game.RED_WINS:
             print("Ooooh wins!")
+        elif outcome == Game.GREEN_WINS:
+            print("green wins")
+        elif outcome == Game.YELLOW_WINS:
+            print("yellow wins")
         else:
             print("It's a tie (⧓)!")
+
 
     def _clear(self):
         os.system('clear')
