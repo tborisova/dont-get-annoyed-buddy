@@ -14,7 +14,7 @@ class PlayerTest(unittest.TestCase):
     def testMovePawnChangesPawnPosition(self):
         player = Player(Game.BLUE)
 
-        player.move_pawn_at(1, 3)
+        player.move_pawn_at(1, 3, 3)
         self.assertEqual(player.pawn_position(1), 3)
         self.assertEqual(player.pawn_position(2), 0)
         self.assertEqual(player.pawn_position(3), 0)

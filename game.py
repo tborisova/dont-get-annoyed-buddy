@@ -60,15 +60,15 @@ class Game:
             if self._player.will_go_in_house(pawn, position):
                 self._board[old_position] = 0
             else:
-                if self._player.can_move_to_position(pawn, new_position):
+                if self._player.can_move_to_position(pawn, new_position):            
+                    new_position = self._player.move_pawn_at(pawn, new_position, position)
                     if self._board[new_position]:
                         for player in self._players:
                             if player.color() != self.current_player and position in player._pawns:
                                 self._players[self.previous_player].remove_from_position(new_position)
                                 break
                     self._board[old_position] = 0
-                    
-                    new_position = self._player.move_pawn_at(pawn, new_position, position) #това трябва да връща new_position на 70 ред
+        
                     self._board[new_position] = self._player.color_name()
 
         self.change_current_player()
@@ -152,7 +152,7 @@ class Player:
         return True
 
     def will_go_in_house(self, pawn, moves):
-        if self._pawns[pawn - 1] in Game.PATHS_TO_END[self.color_name()] and moves == 1:
+        if self._pawns[pawn - 1] == Game.PATHS_TO_END[self.color_name()][3] and moves == 1:
             self._pawns[pawn - 1] = -1
             return True
         return False
