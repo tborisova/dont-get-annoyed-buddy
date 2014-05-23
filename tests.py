@@ -1,6 +1,5 @@
 import unittest
 
-# from game import Game
 from player import Player,  RedPlayer
 
 class PlayerTest(unittest.TestCase):
@@ -25,6 +24,7 @@ class PlayerTest(unittest.TestCase):
         player = RedPlayer()
         player._pawns[0] = 56
         self.assertTrue(player.pawn_is_in_house(1))
+
 
 if __name__ == '__main__':
     unittest.main()

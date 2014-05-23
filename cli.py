@@ -1,7 +1,7 @@
 import re
 import os
 from game import Game
-from game import Player
+from player import Player, RedPlayer, BluePlayer, GreenPlayer, YellowPlayer
 
 BOARD = """
                   38 39 00
@@ -9,7 +9,7 @@ BOARD = """
             r     36 41 02      b
                   35 42 03
       30 31 32 33 34 43 04 05 06 07 08
-      29 52 53 54 55    47 46 45 44 09
+      29 52 53 54 55 56 47 46 45 44 09
       28 27 26 25 24 51 14 13 12 11 10
                   23 50 15
                   22 49 16
@@ -25,26 +25,25 @@ class CLI:
         while self._game.outcome() == Game.IN_PROGRESS:
             # self._clear()
             self._draw_board()
-
-            position = None
-            while position is None:
-                position_and_pawn = self._get_move()
+            position_and_pawn = self._get_move()
+            if len(position_and_pawn) > 0:  
                 position = position_and_pawn[1]
+                self._game.play(position_and_pawn[0], position_and_pawn[1])
+            else:
+                self._game.change_player()
 
-            self._game.play(position_and_pawn[0], position_and_pawn[1])
-        
         self._clear()
         self._draw_board()
 
         outcome = self._game.outcome()
 
-        if outcome == Game.BLUE_WINS:
+        if outcome == BluePlayer.COLOR:
             print("Whoo! BLUE wins!")
-        elif outcome == Game.RED_WINS:
+        elif outcome == RedPlayer.COLOR:
             print("Ooooh wins!")
-        elif outcome == Game.GREEN_WINS:
+        elif outcome == GreenPlayer.COLOR:
             print("green wins")
-        elif outcome == Game.YELLOW_WINS:
+        elif outcome == YellowPlayer.COLOR:
             print("yellow wins")
         else:
             print("It's a tie (⧓)!")
@@ -55,6 +54,7 @@ class CLI:
 
     def _draw_board(self):
         b = BOARD[:]
+        print(self._game._board)
         for index, cell in enumerate(self._game._board):
             original_index = index
             if index in range(0, 10):
@@ -68,14 +68,16 @@ class CLI:
         print(b)
 
     def _get_move(self):
-        print("Player: {0} is about to throw dice".format(self._game._player.color_name()))
+        print("Player: {0} is about to throw dice".format(self._game._player.color))
         dice = self._game._player.throw_dice()
         print("You throw: {0}".format(dice))
-        print("Choose pawn to move:[1,2,3,4]:", end='')
-        pawn = input()
-        position = dice
+        if len(self._game._player.available_pawns()) > 0:
+            print("Choose pawn to move:{0}:".format(self._game._player.available_pawns()), end='')
+            pawn = int(input())
+            position = dice
         
-        return [1, position]
+            return [pawn, position]
+        else:
+            return []
 
-
-CLI([Player(Game.BLUE), Player(Game.GREEN), Player(Game.YELLOW), Player(Game.RED)]).play()
+CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()
