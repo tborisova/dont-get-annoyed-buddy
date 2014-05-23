@@ -14,7 +14,7 @@ class PlayerTest(unittest.TestCase):
     def testMovePawnChangesPawnPosition(self):
         player = Player(Game.BLUE)
 
-        player.move_pawn_at(1, 3, 3)
+        player.move_pawn_at(1, 3)
         self.assertEqual(player.pawn_position(1), 3)
         self.assertEqual(player.pawn_position(2), 0)
         self.assertEqual(player.pawn_position(3), 0)
@@ -39,19 +39,19 @@ class GameTest(unittest.TestCase):
     
     def testPlayChangesCurrentPlayer(self):
         game = self.create_game()
-        self.assertEqual(game.current_player, Game.BLUE)     
+        self.assertEqual(game._player._color, Game.BLUE)     
         
         game.play(1,2)
-        self.assertEqual(game.current_player, Game.GREEN)
+        self.assertEqual(game._player._color, Game.GREEN)
         
         game.play(1,4)
-        self.assertEqual(game.current_player, Game.YELLOW)
+        self.assertEqual(game._player._color, Game.YELLOW)
 
         game.play(1,3)
-        self.assertEqual(game.current_player, Game.RED)
+        self.assertEqual(game._player._color, Game.RED)
         
         game.play(1,0)            
-        self.assertEqual(game.current_player, Game.BLUE)
+        self.assertEqual(game._player._color, Game.BLUE)
        
     def testPlayChangesBoard(self):
         game = self.create_game()
