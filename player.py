@@ -1,5 +1,5 @@
 import random
-#avaialbe pawns: [1, 1] показва
+
 class Player:
 
     def __init__(self):
@@ -22,20 +22,23 @@ class Player:
         self._dice = random.randint(1, 6)
         return self._dice
 
-    def can_throw_again(self, dice):
+    def can_throw_again(self):
         return self._dice == 6
 
     def all_pawns_are_in_house(self):
         return all(self.pawn_is_in_house(pawn) for pawn in range(0, 3))
 
-    def available_pawns(self):
-        available = [pawn + 1 for pawn in range(0, 3) if self._pawns[pawn] != -1]
+    def available_pawns(self, dice):
+        available = []
+        available = [ index  + 1 for index, pawn in enumerate(self._pawns) if self.pawn_can_move(index + 1)]
 
-        if self._dice == 6 and len(available) < 4:
-            new_pawn = [pawn + 1 for pawn in range(0, 3) if self.pawn_is_not_in_field(pawn)][0]
-            available.append(new_pawn + 1)
-
+        if dice == 6:    
+            available.append([ index  + 1 for index, pawn in enumerate(self._pawns) if self.pawn_is_not_in_field(index + 1)][0])
+            
         return available
+
+    def  pawn_can_move(self, pawn):
+        return not self.pawn_is_in_house(pawn) and not self.pawn_is_not_in_field(pawn)
 
     def get_pawn_position(self, pawn):
         return self._pawns[pawn - 1]
