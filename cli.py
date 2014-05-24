@@ -23,14 +23,15 @@ class CLI:
 
     def play(self):
         while self._game.outcome() == Game.IN_PROGRESS:
-            # self._clear()
+            self._clear()
             self._draw_board()
             position_and_pawn = self._get_move()
-            if len(position_and_pawn) > 0:  
-                position = position_and_pawn[1]
-                self._game.play(position_and_pawn[0], position_and_pawn[1])
-            else:
+            while len(position_and_pawn) == 0:  
                 self._game.change_player()
+                position_and_pawn = self._get_move()
+            position = position_and_pawn[1]
+            self._game.play(position_and_pawn[0], position_and_pawn[1])
+            
 
         self._clear()
         self._draw_board()
@@ -38,23 +39,19 @@ class CLI:
         outcome = self._game.outcome()
 
         if outcome == BluePlayer.COLOR:
-            print("Whoo! BLUE wins!")
+            print("Blue wins!")
         elif outcome == RedPlayer.COLOR:
-            print("Ooooh wins!")
+            print("Red wins!")
         elif outcome == GreenPlayer.COLOR:
-            print("green wins")
+            print("Green wins")
         elif outcome == YellowPlayer.COLOR:
-            print("yellow wins")
-        else:
-            print("It's a tie (⧓)!")
-
+            print("Yellow wins")
 
     def _clear(self):
         os.system('clear')
 
     def _draw_board(self):
         b = BOARD[:]
-        print(self._game._board)
         for index, cell in enumerate(self._game._board):
             original_index = index
             if index in range(0, 10):
@@ -68,16 +65,23 @@ class CLI:
         print(b)
 
     def _get_move(self):
-        print("Player: {0} is about to throw dice".format(self._game._player.color))
-        dice = self._game._player.throw_dice()
-        print("You throw: {0}".format(dice))
-        if len(self._game._player.available_pawns()) > 0:
-            print("Choose pawn to move:{0}:".format(self._game._player.available_pawns()), end='')
-            pawn = int(input())
-            position = dice
-        
-            return [pawn, position]
-        else:
-            return []
+        print("Player: {0} is about to throw dice".format(self._game.current_player.color))
+        print("Enter 'y' to throw dice")
+        choice = str(input())
+        if choice == 'y':
+            dice = self._game.current_player.throw_dice()
+            print("You throw: {0}".format(dice))
+            if len(self._game.current_player.available_pawns(dice)) > 0:
+                pawn = None
+                while pawn is None:
+                    print("Choose pawn to move:{0}:".format(self._game.current_player.available_pawns(dice)), end='')
+                    pawn = int(input())
+                    position = dice
+                    if pawn not in self._game.current_player.available_pawns(dice):
+                        pawn = None
+                return [pawn, position]
+            else:
+                print("You can't move any pawn")
+                return []
 
 CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()
