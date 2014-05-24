@@ -28,7 +28,7 @@ class Game:
     def update_position_on_board(self, position, pawn, old_position):
         if self._board[position] and self._board[position].count(self.current_player.color) == 0:
             player_color = self._board[position][0]
-            player = [player for player in self._players if player.color == player_color][0]
+            player = next(player for player in self._players if player.color == player_color)
             player.remove_pawn_from_position(position)
         self._board[position] = self.current_player.color + str(pawn)
         if old_position != -1:

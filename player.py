@@ -31,13 +31,13 @@ class Player:
         return all(self.pawn_is_in_house(pawn) for pawn in range(0, 3))
 
     def available_pawns(self, dice):
-        available = []
-        available = [index + 1 for index, pawn in enumerate(self._pawns)
-        if self.pawn_can_move(index + 1)]
+        available = [index + 1 for index in range(0, 3)
+            if self.pawn_can_move(index + 1)]
 
         if dice == 6:
-            available.append([index + 1 for index, pawn in
-            enumerate(self._pawns) if self.pawn_is_not_in_field(index + 1)][0])
+            pawn = next(index + 1 for index in range(0, 3)
+                if self.pawn_is_not_in_field(index + 1))
+            available.append(pawn)
 
         return available
 
@@ -49,9 +49,8 @@ class Player:
         return self._pawns[pawn - 1]
 
     def remove_pawn_from_position(self, position):
-        pawn = [pawn for pawn in range(0, 3) if
-            self._pawns[pawn] == position][0]
-        self._pawns[pawn] = -1
+        pawn_index = self._pawns.index(position)
+        self._pawns[pawn_index] = -1
 
 
 class RedPlayer(Player):
