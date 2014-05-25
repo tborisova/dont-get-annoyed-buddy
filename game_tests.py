@@ -118,6 +118,18 @@ class GameTest(unittest.TestCase):
                                                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
                                                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
+    def testThatPlayerIsNotChangedIfHeThrowsSix(self):
+        game = self.create_game()
+
+        game.play(1, 6)
+        self.assertEqual(game._player_index, 0)
+
+        game.play(1, 6)
+        self.assertEqual(game._player_index, 0)
+
+        game.play(1, 5)
+        self.assertEqual(game._player_index, 1)
+
 if __name__ == '__main__':
     unittest.main()
 

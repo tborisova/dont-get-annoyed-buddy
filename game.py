@@ -14,7 +14,7 @@ class Game:
         old_position = self.current_player.get_pawn_position(pawn)
         position = self.current_player.move_pawn(pawn, moves)
         self.update_position_on_board(position, pawn, old_position)
-        self.change_player()
+        self.change_player(moves)
 
     def at(self, position):
         return self._board[position]
@@ -34,8 +34,9 @@ class Game:
         if old_position != -1:
             self._board[old_position] = 0
 
-    def change_player(self):
-        if self._player_index == 3:
-            self._player_index = 0
-        else: 
-            self._player_index += 1   
+    def change_player(self, dice):
+        if dice != 6:
+            if self._player_index == 3:
+                self._player_index = 0
+            else: 
+                self._player_index += 1   
