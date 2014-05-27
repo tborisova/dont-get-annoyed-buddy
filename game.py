@@ -1,3 +1,5 @@
+import PodSixNet
+
 class Game:
     IN_PROGRESS = 0
 
@@ -34,7 +36,7 @@ class Game:
         if old_position != -1:
             self._board[old_position] = 0
 
-    def change_player(self, dice):
+    def change_player(self, dice=None):
         if dice != 6:
             if self._player_index == 3:
                 self._player_index = 0
