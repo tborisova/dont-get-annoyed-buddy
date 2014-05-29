@@ -1,9 +1,10 @@
 import PodSixNet
 
+
 class Game:
     IN_PROGRESS = 0
 
-    def __init__(self, players ,board=None):
+    def __init__(self, players, board=None):
         self._board = board or [0]*57
         self._players = players
         self._player_index = 0
@@ -28,9 +29,11 @@ class Game:
         return Game.IN_PROGRESS
 
     def update_position_on_board(self, position, pawn, old_position):
-        if self._board[position] and self._board[position].count(self.current_player.color) == 0:
+        board_pos = self.at(position)
+        if board_pos and board_pos.count(self.current_player.color) == 0:
             player_color = self._board[position][0]
-            player = next(player for player in self._players if player.color == player_color)
+            player = next(player for player in self._players
+                          if player.color == player_color)
             player.remove_pawn_from_position(position)
         self._board[position] = self.current_player.color + str(pawn)
         if old_position != -1:
@@ -40,5 +43,5 @@ class Game:
         if dice != 6:
             if self._player_index == 3:
                 self._player_index = 0
-            else: 
-                self._player_index += 1   
+            else:
+                self._player_index += 1
