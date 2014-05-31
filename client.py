@@ -7,9 +7,6 @@ from sys import stdin, exit
 
 from PodSixNet.Connection import connection, ConnectionListener
 
-# This example uses Python threads to manage async input from sys.stdin.
-# This is so that I can receive input from the console whilst running the server.
-# Don't ever do this - it's slow and ugly. (I'm doing it for simplicity's sake)
 from threading import *
 
 class Client(ConnectionListener): #client sends messages to clientchannel which is in chatserver
@@ -17,12 +14,9 @@ class Client(ConnectionListener): #client sends messages to clientchannel which 
         self.Connect((host, port))
         print("Chat client started")
         print("Ctrl-C to exit")
-        # get a nickname from the user before starting
         print("Choose color: ")
         connection.Send({"action": "nickname", "nickname": stdin.readline().rstrip("\n")})
-        # launch our threaded input loop
         t = Thread(target=self.InputLoop).start()
-   # t = start_new_thread(self.InputLoop, ())
     
     def Loop(self):
         connection.Pump()
