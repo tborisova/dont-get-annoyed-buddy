@@ -84,4 +84,4 @@ class CLI:
                 print("You can't move any pawn")
                 return []
 
-CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()
+# CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()

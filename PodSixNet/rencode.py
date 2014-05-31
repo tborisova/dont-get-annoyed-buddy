@@ -1,6 +1,6 @@
 
 """
-rencode -- Web safe object pickling/unpickling.
+rencode -- Web safe object pickling/unpickling. Python 3k version
 
 The rencode module is a modified version of bencode from the
 BitTorrent project.  For complex, heterogeneous data structures with
@@ -32,6 +32,9 @@ from base64 import b64encode, b64decode
 ##
 
 # Original bencode module by Petru Paler, et al.
+#
+# Modifications by Joseph Parker:
+# - Conversion to Python 3.x
 #
 # Modifications by Daniele Tricoli:
 #
@@ -92,16 +95,8 @@ import inspect
 import struct
 
 from threading import Lock
+import types
 
-from types import (StringType,
-                   UnicodeType,
-                   IntType,
-                   LongType,
-                   DictType,
-                   ListType,
-                   TupleType,
-                   FloatType,
-                   NoneType)
 
 class AlreadyRegistered(Exception): pass
 
@@ -148,7 +143,7 @@ class _SerializableRegistry(object):
                 if inspect.ismethod(cls._pack):
                     cls._pack = add_class_name(cls._pack)
                     self._registry[cls.__name__] = cls
-            except AttributeError, err:
+            except AttributeError as err:
                 raise NotSerializable(err)
 
     def unregister(self, cls):
@@ -171,20 +166,20 @@ MAX_INT_LENGTH = 64
 # The bencode 'typecodes' such as i, d, etc have been extended and
 # relocated on the base-256 character set.
 # Can't be used chr(48) to chr(57) because they are manually set
-CHR_INSTANCE = chr(47) 
-CHR_TUPLE = chr(58)
-CHR_LIST = chr(59)
-CHR_DICT = chr(60)
-CHR_INT = chr(61)
-CHR_INT1 = chr(62)
-CHR_INT2 = chr(63)
-CHR_INT4 = chr(64)
-CHR_INT8 = chr(65)
-CHR_FLOAT = chr(66)
-CHR_TRUE = chr(67)
-CHR_FALSE = chr(68)
-CHR_NONE = chr(69)
-CHR_TERM = chr(127)
+CHR_INSTANCE = b'/'
+CHR_TUPLE = b':'
+CHR_LIST = b';'
+CHR_DICT = b'<'
+CHR_INT = b'='
+CHR_INT1 = b'>'
+CHR_INT2 = b'?'
+CHR_INT4 = b'@'
+CHR_INT8 = b'A'
+CHR_FLOAT = b'B'
+CHR_TRUE = b'C'
+CHR_FALSE = b'D'
+CHR_NONE = b'E' 
+CHR_TERM = b'\x7f'
 
 # Positive integers with value embedded in typecode.
 INT_POS_FIXED_START = 0
@@ -211,6 +206,7 @@ TUPLE_FIXED_START = LIST_FIXED_START + LIST_FIXED_COUNT
 TUPLE_FIXED_COUNT = 32
 
 def decode_int(x, f):
+
     f += 1
     newf = x.index(CHR_TERM, f)
     if newf - f >= MAX_INT_LENGTH:
@@ -224,6 +220,7 @@ def decode_int(x, f):
             raise ValueError
     elif x[f] == '0' and newf != f+1:
         raise ValueError
+    
     return (n, newf+1)
 
 def decode_intb(x, f):
@@ -254,7 +251,7 @@ def decode_float(x, f):
         raise ValueError
 
 def decode_string(x, f):
-    colon = x.index(':', f)
+    colon = x.index(b':', f)
     try:
         n = int(x[f:colon])
     except (OverflowError, ValueError):
@@ -262,27 +259,32 @@ def decode_string(x, f):
     if x[f] == '0' and colon != f+1:
         raise ValueError
     colon += 1
-    return (b64decode(x[colon:colon+n]), colon+n)
+    return (x[colon:colon+n].decode(), colon+n)
 
 def decode_list(x, f):
     r, f = [], f+1
-    while x[f] != CHR_TERM:
-        v, f = decode_func[x[f]](x, f)
+    while x[f:f+1] != CHR_TERM:
+        l = determine_flag_len(x, f)
+        v, f = decode_func[x[f:f+l]](x, f)
         r.append(v)
     return (r, f + 1)
 
 def decode_tuple(x, f):
     r, f = [], f+1
-    while x[f] != CHR_TERM:
-        v, f = decode_func[x[f]](x, f)
+    while x[f:f+1] != CHR_TERM:
+        l = determine_flag_len(x, f)
+        v, f = decode_func[x[f:f+l]](x, f)
         r.append(v)
     return (tuple(r), f + 1)
 
 def decode_dict(x, f):
     r, f = {}, f+1
-    while x[f] != CHR_TERM:
-        k, f = decode_func[x[f]](x, f)
-        r[k], f = decode_func[x[f]](x, f)
+    
+    while x[f:f+1] != CHR_TERM:
+        l = determine_flag_len(x, f)
+        k, f = decode_func[x[f:f+l]](x, f)
+        l = determine_flag_len(x, f)
+        r[k], f = decode_func[x[f:f+l]](x, f)
     return (r, f + 1)
 
 def decode_true(x, f):
@@ -305,16 +307,16 @@ def decode_instance(x, f):
     return (r, f+1)
 
 decode_func = {}
-decode_func['0'] = decode_string
-decode_func['1'] = decode_string
-decode_func['2'] = decode_string
-decode_func['3'] = decode_string
-decode_func['4'] = decode_string
-decode_func['5'] = decode_string
-decode_func['6'] = decode_string
-decode_func['7'] = decode_string
-decode_func['8'] = decode_string
-decode_func['9'] = decode_string
+decode_func[b'0'] = decode_string
+decode_func[b'1'] = decode_string
+decode_func[b'2'] = decode_string
+decode_func[b'3'] = decode_string
+decode_func[b'4'] = decode_string
+decode_func[b'5'] = decode_string
+decode_func[b'6'] = decode_string
+decode_func[b'7'] = decode_string
+decode_func[b'8'] = decode_string
+decode_func[b'9'] = decode_string
 decode_func[CHR_LIST ] = decode_list
 decode_func[CHR_TUPLE] = decode_tuple
 decode_func[CHR_DICT ] = decode_dict
@@ -332,38 +334,53 @@ decode_func[CHR_INSTANCE] = decode_instance
 def make_fixed_length_string_decoders():
     def make_decoder(slen):
         def f_fixed_string(x, f):
-            return (b64decode(x[f+1:f+1+slen]), f+1+slen)
+            l = determine_flag_len(x, f)
+            return (x[f+l:f+l+slen].decode(), f+l+slen)
         return f_fixed_string
     for i in range(STR_FIXED_COUNT):
-        decode_func[chr(STR_FIXED_START+i)] = make_decoder(i)
+        #print(chr(STR_FIXED_START+i).encode())
+        decode_func[chr(STR_FIXED_START+i).encode()] = make_decoder(i)
 
 make_fixed_length_string_decoders()
+
+## switch for type identifier, is it 1 or 2 bytes?
+def determine_flag_len(x, f): #data, index
+    l = 1 #length
+    if x[f:f+1] in (b'\xc2', b'\xc3'): #have to slice to preserve b'bytes'
+        l = 2
+    return l
+
 
 def make_fixed_length_list_decoders():
     def make_decoder(slen):
         def f_fixed_list(x, f):
-            r, f = [], f+1
+            l = determine_flag_len(x, f)
+            r, f = [], f+l
+            
             for i in range(slen):
-                v, f = decode_func[x[f]](x, f)
+                l = determine_flag_len(x, f)
+                v, f = decode_func[x[f:f+l]](x, f)
                 r.append(v)
             return (r, f)
         return f_fixed_list
     for i in range(LIST_FIXED_COUNT):
-        decode_func[chr(LIST_FIXED_START+i)] = make_decoder(i)
+        decode_func[chr(LIST_FIXED_START+i).encode()] = make_decoder(i)
 
 make_fixed_length_list_decoders()
 
 def make_fixed_length_tuple_decoders():
     def make_decoder(slen):
         def f_fixed_tuple(x, f):
-            r, f = [], f+1
+            l = determine_flag_len(x, f)
+            r, f = [], f+l
             for i in range(slen):
-                v, f = decode_func[x[f]](x, f)
+                l = determine_flag_len(x, f)
+                v, f = decode_func[x[f:f+l]](x, f)
                 r.append(v)
             return (tuple(r), f)
         return f_fixed_tuple
     for i in range(TUPLE_FIXED_COUNT):
-        decode_func[chr(TUPLE_FIXED_START+i)] = make_decoder(i)
+        decode_func[chr(TUPLE_FIXED_START+i).encode()] = make_decoder(i)
 
 make_fixed_length_tuple_decoders()
 
@@ -373,78 +390,98 @@ def make_fixed_length_int_decoders():
             return (j, f+1)
         return f
     for i in range(INT_POS_FIXED_COUNT):
-        decode_func[chr(INT_POS_FIXED_START+i)] = make_decoder(i)
+        decode_func[chr(INT_POS_FIXED_START+i).encode()] = make_decoder(i)
     for i in range(INT_NEG_FIXED_COUNT):
-        decode_func[chr(INT_NEG_FIXED_START+i)] = make_decoder(-1-i)
+        decode_func[chr(INT_NEG_FIXED_START+i).encode()] = make_decoder(-1-i)
 
 make_fixed_length_int_decoders()
 
 def make_fixed_length_dict_decoders():
     def make_decoder(slen):
         def f(x, f):
-            r, f = {}, f+1
+            l = determine_flag_len(x, f)
+            r, f = {}, f+l
+            
             for j in range(slen):
-                k, f = decode_func[x[f]](x, f)
-                r[k], f = decode_func[x[f]](x, f)
+                
+                l = determine_flag_len(x, f)
+                k, f = decode_func[x[f:f+l]](x, f)
+                
+                l = determine_flag_len(x, f)
+                r[k], f = decode_func[x[f:f+l]](x, f)
+                
+                
             return (r, f)
+            
         return f
     for i in range(DICT_FIXED_COUNT):
-        decode_func[chr(DICT_FIXED_START+i)] = make_decoder(i)
+        decode_func[chr(DICT_FIXED_START+i).encode()] = make_decoder(i)
 
 make_fixed_length_dict_decoders()
 
 def loads(x):
+    flagl = determine_flag_len(x, 0)
     try:
-        r, l = decode_func[x[0]](x, 0)
+        r, l = decode_func[x[0:flagl]](x, 0)
     except (IndexError, KeyError):
         raise 
     if l != len(x):
-        raise ValueError
+        print(r, l, len(x))
+        print("ValueError")
+        #raise ValueError
     return r
 
 def encode_int(x, r):
     if 0 <= x < INT_POS_FIXED_COUNT:
-        r.append(chr(INT_POS_FIXED_START+x))
+        r.append(chr(INT_POS_FIXED_START+x).encode())
+        
     elif -INT_NEG_FIXED_COUNT <= x < 0:
-        r.append(chr(INT_NEG_FIXED_START-1-x))
+        r.append(chr(INT_NEG_FIXED_START-1-x).encode())
     elif -128 <= x < 128:
-        r.extend((CHR_INT1, struct.pack('!b', x)))
+        r += [CHR_INT1, struct.pack('!b', x)]
+        
     elif -32768 <= x < 32768:
-        r.extend((CHR_INT2, struct.pack('!h', x)))
+        r += [CHR_INT2, struct.pack('!h', x)]
+        
     elif -2147483648 <= x < 2147483648:
-        r.extend((CHR_INT4, struct.pack('!l', x)))
+        r += [CHR_INT4, struct.pack('!l', x)]
     elif -9223372036854775808 <= x < 9223372036854775808:
-        r.extend((CHR_INT8, struct.pack('!q', x)))
+        
+        r += [CHR_INT8, struct.pack('!q', x)]
     else:
-        s = str(x)
+        s = str(x).encode()
         if len(s) >= MAX_INT_LENGTH:
             raise ValueError('overflow')
-        r.extend((CHR_INT, s, CHR_TERM))
+        r += [CHR_INT, s, CHR_TERM]
 
 def encode_float(x, r):
+
     if FLOAT_BITS == 32:
-        r.extend((CHR_FLOAT, struct.pack('!f', x)))
+
+        r += [CHR_FLOAT, struct.pack('!f', x)]
     elif FLOAT_BITS == 64:
-        r.extend((CHR_FLOAT, struct.pack('!d', x)))
+
+        r += [CHR_FLOAT, struct.pack('!d', x)]
     else:
         raise ValueError
 
 def encode_bool(x, r):
-    r.extend({False: CHR_FALSE, True: CHR_TRUE}[bool(x)])
+
+    r += [{False: CHR_FALSE, True: CHR_TRUE}[bool(x)] ]
 
 def encode_none(x, r):
-    r.extend(CHR_NONE)
+    r.append(CHR_NONE)
 
 def encode_string(x, r):
-    x = b64encode(x)
+    x = x.encode()
     if len(x) < STR_FIXED_COUNT:
-        r.extend((chr(STR_FIXED_START + len(x)), x))
+        r += [chr(STR_FIXED_START + len(x)).encode(), x]
     else:
-        r.extend((str(len(x)), ':', x))
+        r += [str(len(x)).encode(), b':', x]
 
 def encode_list(x, r):
     if len(x) < LIST_FIXED_COUNT:
-        r.append(chr(LIST_FIXED_START + len(x)))
+        r += [chr(LIST_FIXED_START + len(x)).encode()]
         for i in x:
             encode_func.get(type(i), encode_instance)(i, r)
     else:
@@ -456,7 +493,7 @@ def encode_list(x, r):
 
 def encode_tuple(x, r):
     if len(x) < TUPLE_FIXED_COUNT:
-        r.append(chr(TUPLE_FIXED_START + len(x)))
+        r += [chr(TUPLE_FIXED_START + len(x)).encode() ]
         for i in x:
             encode_func.get(type(i), encode_instance)(i, r)
     else:
@@ -467,33 +504,29 @@ def encode_tuple(x, r):
 
 def encode_dict(x,r):
     if len(x) < DICT_FIXED_COUNT:
-        r.append(chr(DICT_FIXED_START + len(x)))
+        r.append(chr(DICT_FIXED_START + len(x)).encode() )
         for k, v in x.items():
             encode_func[type(k)](k, r)
             encode_func[type(v)](v, r)
     else:
-        r.append(CHR_DICT)
+        r.append(CHR_DICT) 
         for k, v in x.items():
             encode_func[type(k)](k, r)
             encode_func[type(v)](v, r)
-        r.append(CHR_TERM)
+        r.append(CHR_TERM) 
+    
 
 encode_func = {}
-encode_func[IntType] = encode_int
-encode_func[LongType] = encode_int
-encode_func[FloatType] = encode_float
-encode_func[StringType] = encode_string
-encode_func[UnicodeType] = encode_string
-encode_func[ListType] = encode_list
-encode_func[TupleType] = encode_tuple
-encode_func[DictType] = encode_dict
-encode_func[NoneType] = encode_none
+encode_func[int] = encode_int
+encode_func[int] = encode_int
+encode_func[float] = encode_float
+encode_func[str] = encode_string
+encode_func[list] = encode_list
+encode_func[tuple] = encode_tuple
+encode_func[dict] = encode_dict
+encode_func[type(None)] = encode_none
+encode_func[type(True)] = encode_bool
 
-try:
-    from types import BooleanType
-    encode_func[BooleanType] = encode_bool
-except ImportError:
-    pass
 
 def encode_instance(x, r):
     if hasattr(x, '_pack'):
@@ -501,9 +534,9 @@ def encode_instance(x, r):
             # Calling the class of instance `x' passing it to the
             # unbound method
             result = serializable[x.__class__.__name__]._pack(x)
-            r.append(CHR_INSTANCE)
+            r.append(CHR_INSTANCE.encode())
             encode_func[type(result)](result, r)
-            r.append(CHR_TERM)
+            r.append(CHR_TERM.encode())
         else:
             raise NotRegistered(x.__class__.__name__)
 
@@ -514,14 +547,19 @@ def dumps(x):
     r = []
     encode_func.get(type(x), encode_instance)(x, r)
     lock.release()
-    return ''.join(r)
+    for entry in r:
+        if type(entry) != bytes:
+            print("!!!!!!!!!", entry)
+    return b''.join(r)
 
 def test():
     f1 = struct.unpack('!f', struct.pack('!f', 25.5))[0]
     f2 = struct.unpack('!f', struct.pack('!f', 29.3))[0]
     f3 = struct.unpack('!f', struct.pack('!f', -0.6))[0]
     L = (({'a':15, 'bb':f1, 'ccc':f2, '':(f3,(),False,True,'')},('a',10**20),tuple(range(-100000,100000)),'b'*31,'b'*62,'b'*64,2**30,2**33,2**62,2**64,2**30,2**33,2**62,2**64,False,False, True, -1, 2, 0),)
-    assert loads(dumps(L)) == L
+    G = loads(dumps(L))
+    
+    assert G == L
     d = dict(zip(range(-100000,100000),range(-100000,100000)))
     d.update({'a':20, 20:40, 40:41, f1:f2, f2:f3, f3:False, False:True, True:False})
     L = (d, {}, {5:6}, {7:7,True:8}, {9:10, 22:39, 49:50, 44: ''})
@@ -555,7 +593,7 @@ def test():
     serializable.register(A)
 
     instance = [A(1,2,3), 1, A(1,3,4), 'sss']
-    print loads(dumps(instance))
+    print(loads(dumps(instance)))
 
 if __name__ == '__main__':
   test()
