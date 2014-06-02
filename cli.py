@@ -26,12 +26,12 @@ class CLI:
             self._clear()
             self._draw_board()
             position_and_pawn = self._get_move()
-            while len(position_and_pawn) == 0:  
+            while len(position_and_pawn) == 0:
                 self._game.change_player()
                 position_and_pawn = self._get_move()
             position = position_and_pawn[1]
             self._game.play(position_and_pawn[0], position_and_pawn[1])
-            
+
 
         self._clear()
         self._draw_board()
@@ -84,4 +84,4 @@ class CLI:
                 print("You can't move any pawn")
                 return []
 
-# CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()
+CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()
