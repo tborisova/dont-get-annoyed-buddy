@@ -17,6 +17,7 @@ BOARD = """
                   20 19 18
 """
 
+
 class CLI:
     def __init__(self, players):
         self._game = Game(players)
@@ -31,7 +32,6 @@ class CLI:
                 position_and_pawn = self._get_move()
             position = position_and_pawn[1]
             self._game.play(position_and_pawn[0], position_and_pawn[1])
-
 
         self._clear()
         self._draw_board()
@@ -66,22 +66,24 @@ class CLI:
 
     def _get_move(self):
         print("Player: {0} is about to throw dice".format(self._game.current_player.color))
-        print("Enter 'y' to throw dice")
-        choice = str(input())
-        if choice == 'y':
-            dice = self._game.current_player.throw_dice()
-            print("You throw: {0}".format(dice))
-            if len(self._game.current_player.available_pawns(dice)) > 0:
-                pawn = None
-                while pawn is None:
-                    print("Choose pawn to move:{0}:".format(self._game.current_player.available_pawns(dice)), end='')
-                    pawn = int(input())
-                    position = dice
-                    if pawn not in self._game.current_player.available_pawns(dice):
-                        pawn = None
-                return [pawn, position]
-            else:
-                print("You can't move any pawn")
-                return []
+        choice = 'd'
+        while choice != 'y':
+            print("Enter 'y' to throw dice")
+            choice = str(input())
+            if choice == 'y':
+                dice = self._game.current_player.throw_dice()
+                print("You throw: {0}".format(dice))
+                if len(self._game.current_player.available_pawns(dice)) > 0:
+                    pawn = None
+                    while pawn is None:
+                        print("Choose pawn to move:{0}:".format(self._game.current_player.available_pawns(dice)), end='')
+                        pawn = int(input())
+                        position = dice
+                        if pawn not in self._game.current_player.available_pawns(dice):
+                            pawn = None
+                    return [pawn, position]
+                else:
+                    print("You can't move any pawn")
+                    return []
 
 CLI([RedPlayer(), BluePlayer(), GreenPlayer(), YellowPlayer()]).play()
