@@ -21,48 +21,55 @@ BOARD = """
                   20 19 18
 """
 
-class ClientChannel(Channel, Player):
+class ClientChannel(Channel):
     """
     This is the server representation of a single connected client.
     """
     def __init__(self, *args, **kwargs):
         self.nickname = "anonymous"
         Channel.__init__(self, *args, **kwargs)
-    
+
     def Close(self):
         self._server.DelPlayer(self)
-    
+
     ##################################
     ### Network specific callbacks ###
     ##################################
-    
+
     def Network_message(self, data):
+        print('client send {0}'.format(data))
         self._server.SendToAll({"action": "message", "message": BOARD})
-    
+
+    def Network_player_can_write(self, data):
+        if self._server.game_is_started():
+            return self._server.player_can_write(data['player_color']) == self._server.current_player
+        else:
+            return False
+
     def Network_nickname(self, data):
         self.nickname = data['nickname']
         self._server.SendPlayers()
 
-class ChatServer(Server): #CLI cli sends messages to all
+class ChatServer(Server, CLI): #CLI cli sends messages to all
     channelClass = ClientChannel
 
     def __init__(self, *args, **kwargs):
         Server.__init__(self, *args, **kwargs)
         self.players = WeakKeyDictionary()
         print('Server launched')
-    
+
     def Connected(self, channel, addr):
         self.AddPlayer(channel)
-    
+
     def AddPlayer(self, player):
         print("New Player {0}".format(str(player.addr)))
         self.players[player] = True
         self.SendPlayers()
         if len(self.players) == 2:
             print("will start")
-            self._cli = CLI(RedPlayer([RedPlayer(), BluePlayer()]))
+            self.cli = CLI(RedPlayer([RedPlayer(), BluePlayer()]))
         print("players {0}".format([p for p in self.players]))
-    
+
     def DelPlayer(self, player):
         print("Deleting Player {0}".format(str(player.addr)))
         del self.players[player]
@@ -70,9 +77,12 @@ class ChatServer(Server): #CLI cli sends messages to all
 
     def SendPlayers(self):
         self.SendToAll({"action": "players", "players": [p.nickname for p in self.players]})
-    
+
     def SendToAll(self, data): #sends data to all players
         [p.Send(data) for p in self.players]
+
+    def game_is_started(self):
+        hasattr(self, 'cli')
 
     def Launch(self):
         while True:

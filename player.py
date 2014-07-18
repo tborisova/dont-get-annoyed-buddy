@@ -2,9 +2,22 @@ import random
 
 
 class Player:
+    PATHS = { 'R': [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 0, 1, 2, 3, 4,
+                    5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+                    20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 52, 53, 54, 55, 56],
+              'B': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+                    17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                    31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 56],
+              'Y': [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                    35, 36, 37, 38, 39, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                    13, 14, 15, 16, 17, 18, 19, 48, 49, 50, 51, 56],
+              'G':[10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+                   25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 44, 45, 46, 47, 56]}
 
-    def __init__(self):
+    def __init__(self, color):
         self._pawns = [-1]*4
+        self._color = color
 
     def move_pawn(self, pawn, moves):
         if self._pawns[pawn - 1] != -1:
@@ -51,6 +64,11 @@ class Player:
         pawn_index = self._pawns.index(position)
         self._pawns[pawn_index] = -1
 
+    def path(self, color):
+        return PATHS[color]
+
+    def color(self):
+        return self._color
 
 class RedPlayer(Player):
     PATH = [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 0, 1, 2, 3, 4,
@@ -73,7 +91,7 @@ class BluePlayer(Player):
             31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 56]
     COLOR = 'B'
 
-    @property
+    # @property
     def color(self):
         return BluePlayer.COLOR
 
@@ -91,6 +109,9 @@ class YellowPlayer(Player):
     @property
     def color(self):
         return YellowPlayer.COLOR
+
+    def color(self):
+        return self.color
 
     @property
     def path(self):
