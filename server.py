@@ -54,9 +54,8 @@ class ChatServer(Server):
     
     def __init__(self, *args, **kwargs):
         Server.__init__(self, *args, **kwargs)
-        self.current_player = 0
         self.players = WeakKeyDictionary()
-        self.available_classes = [RedPlayer, BluePlayer, GreenPlayer, YellowPlayer]
+        self.available_classes = [RedPlayer('R'), BluePlayer('B'), GreenPlayer('G'), YellowPlayer('Y')]
         self.player_to_class = {}
         self.game_started = False
         print('Server launched')
@@ -70,8 +69,6 @@ class ChatServer(Server):
             self.players[player] = True
             self.SendPlayers()
             self.assign_color_to_player(player)
-            if len(self.players) == 4:
-                self.current_player = 0            
             print("players {0}".format([p for p in self.players]))
     
     def DelPlayer(self, player):
@@ -91,14 +88,11 @@ class ChatServer(Server):
             sleep(0.0001)
 
     def player_can_write(self, player):
-        return len(self.players) == 4 and self.current_player == list(self.players.keys()).index(player)
+        return self.game_started and self._game.current_player.color == self.player_to_class[player].color
 
     def change_player(self):
-        if self.current_player == 3:
-            self.current_player = 0
-        else:
-            self.current_player += 1
-
+        return 0
+    
     def pick_color(self):
         choice = random.choice(self.available_classes)
         self.available_classes.remove(choice)
@@ -106,8 +100,9 @@ class ChatServer(Server):
 
     def assign_color_to_player(self, player):
         self.player_to_class[player] = self.pick_color()
-        if len(self.player_to_class.items()) == 4:
-            self._game = Game(self.player_to_class.items)
+        if len(self.player_to_class.values()) == 4:
+            print(list(self.player_to_class.values()))
+            self._game = Game(list(self.player_to_class.values()))
             self.game_started = True
         return self.player_to_class[player]
 
