@@ -41,6 +41,13 @@ class Client(ConnectionListener):
         print(data['who'] + ": " + data['message'])
         print(data['board'])
     
+    def Network_message_throw(self, data):
+        print(data['message']) 
+        print(data['board'])
+
+    def Network_drawn_board(self, data):
+        print(data['message']) # + "\n" + print(data['board'])
+
     # built in stuff
 
     def Network_connected(self, data):

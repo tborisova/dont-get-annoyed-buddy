@@ -38,13 +38,28 @@ class ClientChannel(Channel):
     ##################################
     ### Network specific callbacks ###
     ##################################
-    
+
+    # self._server.SendToAll({"action": "message", "message": data['message'], "who": "{0} {1}".format(self.nickname, str(color_class)), 'board' : BOARD}    
     def Network_message(self, data):
-        if self._server.player_can_write(self):
-            color_class = self._server.color_class_for_player(self)
-            self._server.change_player()
-            self._server.SendToAll({"action": "message", "message": data['message'], "who": "{0} {1}".format(self.nickname, str(color_class)), 'board' : BOARD})
-    
+        if self._server.player_can_write(self) and self._server.player_now_should_be_prompt_to_pick_a_pawn:
+            self._server.player_now_should_be_prompt_to_pick_a_pawn = False
+            dice = self._server._game.current_player.throw_dice()
+            self._server.current_player_dice = dice
+            old_player = type(self._server._game.current_player).__name__
+            if len(self._server._game.current_player.available_pawns(dice)) > 0:
+                self._server.SendToAll({'action': 'message_throw', 'message': "{0} throw {1}. Now he should choose pawn: {2}".format(old_player, dice, self._server._game.current_player.available_pawns(dice)), 'board': self._server.draw_board()})
+            else:
+                self._server._game.change_player()
+                self._server.SendToAll({'action': 'message_throw', 'message': "{0} throw {1}. But he can't move pawn, so new player: {2}".format(old_player, dice, type(self._server._game.current_player).__name__), 'board': self._server.draw_board()})
+                self._server.player_now_should_be_prompt_to_pick_a_pawn = True
+        elif self._server.player_can_write(self): #and self._server.player_now_has_picked_a_pawn(self):
+            self._server.SendToAll({'action': 'message_throw', 'message': "{0} choose: {1}".format(type(self._server._game.current_player).__name__, data['message']), 'board': self._server.draw_board()})
+            self._server.player_now_should_be_prompt_to_pick_a_pawn = True
+            self._server._game.change_player()
+            self._server._game.play(int(data['message']), self._server.current_player_dice)
+            self._server.SendToAll({'action': 'draw_board', 'message': "{0}".format(self._server.draw_board())})
+
+
     def Network_nickname(self, data):
         self.nickname = data['nickname']
         self._server.SendPlayers()
@@ -58,6 +73,8 @@ class ChatServer(Server):
         self.available_classes = [RedPlayer('R'), BluePlayer('B'), GreenPlayer('G'), YellowPlayer('Y')]
         self.player_to_class = {}
         self.game_started = False
+        self.current_player_dice = 0
+        self.player_now_should_be_prompt_to_pick_a_pawn = True
         print('Server launched')
     
     def Connected(self, channel, addr):
@@ -90,9 +107,6 @@ class ChatServer(Server):
     def player_can_write(self, player):
         return self.game_started and self._game.current_player.color == self.player_to_class[player].color
 
-    def change_player(self):
-        return 0
-    
     def pick_color(self):
         choice = random.choice(self.available_classes)
         self.available_classes.remove(choice)
@@ -108,6 +122,20 @@ class ChatServer(Server):
 
     def color_class_for_player(self, player):
         return self.player_to_class[player]
+
+    def draw_board(self):
+        b = BOARD[:]
+        for index, cell in enumerate(self._game._board):
+            original_index = index
+            if index in range(0, 10):
+                index = '0' + str(index)
+            else:
+                index = str(index)
+            if cell:
+                b = b.replace(index, self._game.at(original_index), 1)
+            else:
+                b = b.replace(index, '**',  1)
+        return b
 
 # get command line argument of server, port
 if len(sys.argv) != 2:
