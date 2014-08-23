@@ -39,6 +39,7 @@ class Client(ConnectionListener):
     
     def Network_message(self, data):
         print(data['who'] + ": " + data['message'])
+        print(data['board'])
     
     # built in stuff
 

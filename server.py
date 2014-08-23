@@ -1,9 +1,26 @@
+import random
 import sys
 from time import sleep, localtime
 from weakref import WeakKeyDictionary
 
 from PodSixNet.Server import Server
 from PodSixNet.Channel import Channel
+from player import *
+from game import *
+
+BOARD = """
+                  38 39 00
+                  37 40 01
+            r     36 41 02      b
+                  35 42 03
+      30 31 32 33 34 43 04 05 06 07 08
+      29 52 53 54 55 56 47 46 45 44 09
+      28 27 26 25 24 51 14 13 12 11 10
+                  23 50 15
+                  22 49 16
+           y      21 48 17    g
+                  20 19 18
+"""
 
 class ClientChannel(Channel):
     """
@@ -11,6 +28,8 @@ class ClientChannel(Channel):
     """
     def __init__(self, *args, **kwargs):
         self.nickname = "anonymous"
+        self.first_time = True
+        self.color_class = ''
         Channel.__init__(self, *args, **kwargs)
     
     def Close(self):
@@ -22,8 +41,9 @@ class ClientChannel(Channel):
     
     def Network_message(self, data):
         if self._server.player_can_write(self):
+            color_class = self._server.color_class_for_player(self)
             self._server.change_player()
-            self._server.SendToAll({"action": "message", "message": data['message'], "who": self.nickname})
+            self._server.SendToAll({"action": "message", "message": data['message'], "who": "{0} {1}".format(self.nickname, str(color_class)), 'board' : BOARD})
     
     def Network_nickname(self, data):
         self.nickname = data['nickname']
@@ -36,6 +56,9 @@ class ChatServer(Server):
         Server.__init__(self, *args, **kwargs)
         self.current_player = 0
         self.players = WeakKeyDictionary()
+        self.available_classes = [RedPlayer, BluePlayer, GreenPlayer, YellowPlayer]
+        self.player_to_class = {}
+        self.game_started = False
         print('Server launched')
     
     def Connected(self, channel, addr):
@@ -46,8 +69,9 @@ class ChatServer(Server):
             print("New Player {0}".format(str(player.addr)))
             self.players[player] = True
             self.SendPlayers()
+            self.assign_color_to_player(player)
             if len(self.players) == 4:
-                self.current_player = 0
+                self.current_player = 0            
             print("players {0}".format([p for p in self.players]))
     
     def DelPlayer(self, player):
@@ -74,6 +98,21 @@ class ChatServer(Server):
             self.current_player = 0
         else:
             self.current_player += 1
+
+    def pick_color(self):
+        choice = random.choice(self.available_classes)
+        self.available_classes.remove(choice)
+        return choice
+
+    def assign_color_to_player(self, player):
+        self.player_to_class[player] = self.pick_color()
+        if len(self.player_to_class.items()) == 4:
+            self._game = Game(self.player_to_class.items)
+            self.game_started = True
+        return self.player_to_class[player]
+
+    def color_class_for_player(self, player):
+        return self.player_to_class[player]
 
 # get command line argument of server, port
 if len(sys.argv) != 2:
